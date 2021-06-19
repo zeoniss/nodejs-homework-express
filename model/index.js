@@ -35,23 +35,55 @@ const removeContact = async (contactId) => {
     console.log(error.message)
   }
 }
-
 const addContact = async (body) => {
   try {
-    const file = await fs.readFile(contacts, "utf-8")
-    const data = JSON.parse(file)
-    const newContact = { id: Date.now(), ...body }
-    data.push(newContact)
-    const dataString = JSON.stringify(data)
-    fs.writeFile(contacts, dataString, "utf-8")
-    return dataString
+    const data = await fs.readFile(contacts)
+    const contacts = parse.JSON(data)
+    const newContact = {
+      id: Date.now(),
+      ...body
+    }
+    contacts.push(newContact)
+    await fs.writeFile(contacts, JSON.stringify(contacts, null, 2))
+    return newContact
   } catch (error) {
-    console.log(error)
+    console.log(error.message);
+  }
+
+}
+const updateContact = async (contactId, body) => {
+  try {
+    const data = await fs.readFile(contacts)
+    const contact = JSON.parse(data)
+​
+    const findingContact = contact.find(
+      contact => contact.id.toString() === contactId
+    )
+​
+    if (!findingContact) {
+      return null
+    }
+​
+    const changedContact = {
+      ...findingContact,
+      ...body,
+    }
+​
+    const newContacts = contact.map(contact => {
+      if (contact.id === contactId) {
+        return changedContact
+      }
+      return contact
+    })
+​
+    await fs.writeFile(contacts, JSON.stringify(newContacts, null, 2))
+​
+    return changedContact
+  } catch (err) {
+    next(err)
   }
 }
 ​
-
-const updateContact = async (contactId, body) => {}
 
 module.exports = {
   listContacts,
