@@ -2,6 +2,10 @@ const express = require("express")
 const Joi = require("joi")
 const Contacts = require("../../model")
 const router = express.Router()
+const {
+  addValidationContact,
+  updateValidationContact,
+} = require("./validationMiddleware")
 
 router.get("/", async (req, res, next) => {
   try {
@@ -40,18 +44,9 @@ router.delete("/:contactId", async (req, res) => {
   }
 })
 
-router.post("/", async (req, res, next) => {
+router.post("/", addValidationContact, async (req, res, next) => {
   try {
     const contact = await Contacts.addContact(req.body)
-    const schema = Joi.object({
-      name: Joi.string().alphanum().min(3).max(30).required(),
-      email: Joi.string().alphanum().min(3).max(30).required(),
-      phone: Joi.string().alphanum().min(3).max(30).required(),
-    })
-    const validationResult = schema.validate(req.body)
-    if (validationResult.error) {
-      return res.status(400).json({ message: validationResult.error.details })
-    }
     return res
       .status("201")
       .json({ status: "success", code: "201", data: { contact } })
@@ -60,18 +55,8 @@ router.post("/", async (req, res, next) => {
   }
 })
 
-router.put("/:contactId", async (req, res, next) => {
+router.put("/:contactId", updateValidationContact, async (req, res, next) => {
   try {
-    const contact = await Contacts.updateContact(req.params.contactId, req.body)
-    const schema = Joi.object({
-      name: Joi.string().alphanum().min(3).max(30).required(),
-      email: Joi.string().alphanum().min(3).max(30).required(),
-      phone: Joi.string().alphanum().min(3).max(30).required(),
-    })
-    const validationResult = schema.validate(req.body)
-    if (validationResult.error) {
-      return res.status(400).json({ message: validationResult.error.details })
-    }
     if (contact) {
       return res.json({ status: "success", code: "200", data: { contact } })
     }
