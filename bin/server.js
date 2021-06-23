@@ -4,8 +4,7 @@ require("dotenv").config()
 const MongoClient = require("mongodb").MongoClient
 
 const app = express()
-
-const { contactsRouter } = require("./routes/api/contacts")
+const { contactsRouter } = require("../routes/api/contacts")
 
 const PORT = process.env.PORT || 3000
 

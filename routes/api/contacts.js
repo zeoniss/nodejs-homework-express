@@ -1,6 +1,5 @@
-const express = require("express")
 const { request } = require("../../app")
-
+const express = require("express")
 const router = new express.Router()
 const contacts = require("../../model/contacts.json")
 
