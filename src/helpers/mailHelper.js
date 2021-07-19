@@ -1,50 +1,67 @@
-const mongoose = require("mongoose")
-const gravatar = require("gravatar")
+const nodemailer = require("nodemailer")
+const Mailgen = require("mailgen")
 
-const Schema = mongoose.Schema
-const bcrypt = require("bcryptjs")
+require("dotenv").config()
 
-const usersSchema = new Schema({
-  password: {
-    type: String,
-    required: [true, "Password is required"],
-  },
-  email: {
-    type: String,
-    required: [true, "Email is required"],
-    unique: true,
-  },
-  subscription: {
-    type: String,
-    enum: ["starter", "pro", "business"],
-    default: "starter",
-  },
-  token: {
-    type: String,
-    default: null,
-  },
-  avatarURL: {
-    type: String,
-    default: function () {
-      return gravatar.url(this.email, { protocol: "http", s: "100" }, true)
+const mailTemplateCreate = (verificationToken) => {
+  const mailGenerator = new Mailgen({
+    theme: "default",
+    product: {
+      name: "Contacts Book",
+      link: `http://localhost:${process.env.PORT}`,
     },
-  },
-  isVerify: {
-    type: Boolean,
-    default: false,
-  },
-  verifyToken: {
-    type: String,
-  },
-})
+  })
 
-usersSchema.pre("save", async function () {
-  if (this.isNew) {
-    this.password = await bcrypt.hash(this.password, 10)
+  const emailTemplate = {
+    body: {
+      name: "Guest",
+      intro:
+        "Welcome to Contacts Book! We're very excited to have you on board.",
+      action: {
+        instructions: "To get started with Contacts Book, please click here:",
+        button: {
+          color: "#22BC66", // Optional action button color
+          text: "Confirm your account",
+          link: `http://localhost:${process.env.PORT}/api/users/verify/${verificationToken}`,
+        },
+      },
+      outro:
+        "Need help, or have questions? Just reply to this email, we'd love to help.",
+    },
   }
-})
-const UsersModel = mongoose.model("User", usersSchema)
 
-module.exports = {
-  UsersModel,
+  const emailBody = mailGenerator.generate(emailTemplate)
+  console.log("telo pisma", emailBody)
+  return emailBody
 }
+
+const sendEmail = async (verificationToken, email) => {
+  const emailBody = mailTemplateCreate(verificationToken)
+  const config = {
+    host: "smtp.ukr.net",
+    port: 465,
+    auth: {
+      user: process.env.SENDER_EMAIL_FROM,
+      pass: process.env.SENDER_EMAIL_PASS,
+    },
+    tls: {
+      // do not fail on invalid certs
+      rejectUnauthorized: false,
+    },
+  }
+  const transporter = nodemailer.createTransport(config)
+
+  const emailOptions = {
+    from: process.env.SENDER_EMAIL_FROM,
+    to: email,
+    subject: "Account verification",
+    html: emailBody,
+  }
+
+  transporter
+    .sendMail(emailOptions)
+    .then((info) => console.log(info))
+    .catch((err) => console.log(err))
+}
+
+module.exports = { sendEmail }
