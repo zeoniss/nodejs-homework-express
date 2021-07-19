@@ -1,4 +1,5 @@
 const mongoose = require("mongoose")
+const gravatar = require("gravatar")
 
 const Schema = mongoose.Schema
 const bcrypt = require("bcryptjs")
@@ -22,10 +23,21 @@ const usersSchema = new Schema({
     type: String,
     default: null,
   },
+  avatarURL: {
+    type: String,
+    default: function () {
+      return gravatar.url(this.email, { protocol: "http", s: "100" }, true)
+    },
+  },
+  isVerify: {
+    type: Boolean,
+    default: false,
+  },
+  verifyToken: {
+    type: String,
+  },
 })
-//В схеме определяем middleware который перед
-//сохранением проверяет если документ новый,
-//тогда он энкодит ему пароль
+
 usersSchema.pre("save", async function () {
   if (this.isNew) {
     this.password = await bcrypt.hash(this.password, 10)

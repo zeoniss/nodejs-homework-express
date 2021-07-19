@@ -21,20 +21,15 @@ const createUser = async (email, password) => {
 }
 
 const loginUser = async (email, password) => {
-  //достаем пользователя по email
   const user = await UsersModel.findOne({ email })
-  //Если пользователь не найден, прислали неверный email,
-  //можем вернуть UnauthorizeError
+
   if (!user) {
-    throw new UnauthorizeError(`No user with email '${email}' found`)
+    throw new UnauthorizeError("User email is wrong")
   }
-  // если пользователь найден нужно сравнить пароль
   const userCheck = await bcrypt.compare(password, user.password)
   if (!userCheck) {
-    throw new UnauthorizeError("Wrong password")
+    throw new UnauthorizeError("User password is wrong")
   }
-  //Если все ок, подписываем новый токен
-  //для пользователя
   const token = jwt.sign(
     {
       _id: user._id,
@@ -43,7 +38,8 @@ const loginUser = async (email, password) => {
     },
     process.env.JWT_SECRET
   )
-
+  user.token = token
+  await user.save()
   return { user, token }
 }
 
